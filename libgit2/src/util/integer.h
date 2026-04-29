@@ -53,7 +53,20 @@ GIT_INLINE(int) git__is_int(int64_t p)
 #if (__has_builtin(__builtin_add_overflow) || \
      (defined(__GNUC__) && (__GNUC__ >= 5)))
 
-# if (SIZE_MAX == UINT_MAX)
+# if defined(__wasi__)
+/*
+ * Firebox: on wasm32-wasi, both SIZE_MAX == UINT_MAX *and*
+ * SIZE_MAX == ULONG_MAX hold (UINT_MAX, ULONG_MAX, SIZE_MAX
+ * all = 0xFFFFFFFF). Source-level, however, size_t is typedef'd
+ * to `unsigned long`, so passing &size_t to a builtin expecting
+ * `unsigned int *` triggers -Wincompatible-pointer-types -> error.
+ * Force the `unsigned long` variant before the generic checks.
+ */
+#  define git__add_sizet_overflow(out, one, two) \
+     __builtin_uaddl_overflow(one, two, out)
+#  define git__multiply_sizet_overflow(out, one, two) \
+     __builtin_umull_overflow(one, two, out)
+# elif (SIZE_MAX == UINT_MAX)
 #  define git__add_sizet_overflow(out, one, two) \
      __builtin_uadd_overflow(one, two, out)
 #  define git__multiply_sizet_overflow(out, one, two) \
