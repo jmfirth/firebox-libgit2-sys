@@ -80,7 +80,7 @@ GIT_INLINE(int) init_unlock(void)
 	return 0;
 }
 
-#elif defined(GIT_THREADS) && defined(_POSIX_THREADS)
+#elif defined(GIT_THREADS) && (defined(_POSIX_THREADS) || defined(__wasi__))
 
 /*
  * On POSIX, we need to use a proper mutex for locking.  We might prefer

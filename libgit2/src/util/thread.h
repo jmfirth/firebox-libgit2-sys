@@ -431,7 +431,7 @@ GIT_INLINE(int64_t) git_atomic64_get(git_atomic64 *a)
 # define git_tlsdata_key int
 #elif defined(GIT_WIN32)
 # define git_tlsdata_key DWORD
-#elif defined(_POSIX_THREADS)
+#elif defined(_POSIX_THREADS) || defined(__wasi__)
 # define git_tlsdata_key pthread_key_t
 #else
 # error unknown threading model

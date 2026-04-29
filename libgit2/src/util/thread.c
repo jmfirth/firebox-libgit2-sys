@@ -104,7 +104,7 @@ int git_tlsdata_dispose(git_tlsdata_key key)
 	return 0;
 }
 
-#elif defined(_POSIX_THREADS)
+#elif defined(_POSIX_THREADS) || defined(__wasi__)
 
 int git_tlsdata_init(git_tlsdata_key *key, void (GIT_SYSTEM_CALL *destroy_fn)(void *))
 {
