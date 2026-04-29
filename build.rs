@@ -149,6 +149,15 @@ The build is now aborting. To disable, unset the variable or use `LIBGIT2_NO_VEN
         cfg.define("_POSIX_C_SOURCE", "200112L");
         cfg.define("__EXTENSIONS__", None);
     }
+    if target.contains("wasi") {
+        // wasi-libc lacks true mmap and process-associated clocks; opt into
+        // wasi-libc's emulation shims so the headers compile and the symbols
+        // resolve at link time.
+        cfg.define("_WASI_EMULATED_MMAN", None);
+        cfg.define("_WASI_EMULATED_PROCESS_CLOCKS", None);
+        println!("cargo:rustc-link-lib=wasi-emulated-mman");
+        println!("cargo:rustc-link-lib=wasi-emulated-process-clocks");
+    }
 
     let mut features = String::new();
 
