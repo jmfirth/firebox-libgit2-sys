@@ -4389,6 +4389,15 @@ pub fn openssl_init() {
     openssl_sys::init();
 }
 
+// Firebox: cargo compile-only on wasi — git transport not invoked at runtime.
+// Skip openssl init to avoid pulling openssl_sys into the Rust dep graph here
+// (openssl-sys is already pulled in via curl-sys, but with https feature off
+// for libgit2-sys we'd otherwise need a separate target-gate extension on
+// libgit2-sys's Cargo.toml openssl-sys dep too — simpler to no-op).
+#[cfg(target_os = "wasi")]
+#[doc(hidden)]
+pub fn openssl_init() {}
+
 #[cfg(any(windows, not(feature = "https")))]
 #[doc(hidden)]
 pub fn openssl_init() {}
