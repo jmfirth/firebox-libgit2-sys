@@ -155,8 +155,26 @@ The build is now aborting. To disable, unset the variable or use `LIBGIT2_NO_VEN
         // resolve at link time.
         cfg.define("_WASI_EMULATED_MMAN", None);
         cfg.define("_WASI_EMULATED_PROCESS_CLOCKS", None);
-        println!("cargo:rustc-link-lib=wasi-emulated-mman");
-        println!("cargo:rustc-link-lib=wasi-emulated-process-clocks");
+        // firebox#293 L7.g: skip the `-l wasi-emulated-mman` /
+        // `-l wasi-emulated-process-clocks` rustc-link-lib emissions on
+        // wasm32-wasmer-wasi. With L7's DynamicPicExe link kind, rustc's
+        // WasmLd already whole-archives `libwasi-emulated-mman.a`
+        // (rustc_codegen_ssa/src/back/linker.rs:1386), so emitting the
+        // directives here makes wasm-ld see the archive twice in the same
+        // link command and fail with `duplicate symbol: mmap / munmap /
+        // msync / madvise / posix_madvise`. The non-wasmer wasi targets
+        // (wasm32-wasi, wasm32-wasip1, etc.) use Static*PicExe link kinds
+        // which don't whole-archive these libs — they still need the
+        // explicit -l directives, so the upstream behavior is preserved
+        // for them. wasi-emulated-process-clocks isn't whole-archived by
+        // DynamicPicExe either, but we drop both for symmetry; libgit2's
+        // process-clocks symbols come in via the
+        // `-lwasi-emulated-process-clocks` post_link_args entry on the
+        // wasm32-wasmer-wasi target spec instead.
+        if !target.starts_with("wasm32-wasmer-wasi") {
+            println!("cargo:rustc-link-lib=wasi-emulated-mman");
+            println!("cargo:rustc-link-lib=wasi-emulated-process-clocks");
+        }
     }
 
     let mut features = String::new();
