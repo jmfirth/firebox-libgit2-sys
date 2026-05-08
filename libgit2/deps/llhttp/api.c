@@ -39,7 +39,16 @@ void llhttp_init(llhttp_t* parser, llhttp_type_t type,
 }
 
 
-#if defined(__wasm__)
+/* firebox-patch: gate the __wasm__ block on !__wasi__ so wasm32-wasi(/wasmer-wasi)
+ * targets don't pull in the emscripten/nodejs-via-JS bridge. Upstream's
+ * `#if defined(__wasm__)` block declares 8 extern callbacks
+ * (wasm_on_message_begin, wasm_on_url, ...) that the JS host is expected to
+ * provide. Pre-Path-2 (#293) the wasm32-wasmer-wasi cargo build linked these
+ * as unresolved-but-tolerated. Post-Path-2 (PIE-by-default), wasm-ld emits
+ * GOT.mem entries for them; runtime instantiation then hard-fails with
+ * "Unresolved global 'GOT.mem'.wasm_on_message_begin due to: Missing export".
+ * wasi isn't emscripten — these callbacks have no provider in our world. */
+#if defined(__wasm__) && !defined(__wasi__)
 
 extern int wasm_on_message_begin(llhttp_t * p);
 extern int wasm_on_url(llhttp_t* p, const char* at, size_t length);
